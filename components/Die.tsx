@@ -7,7 +7,7 @@ interface DieProps {
   rolling: boolean;
 }
 
-const Dot = ({ cx, cy }: { cx: number; cy: number }) => (
+const Dot: React.FC<{ cx: number; cy: number }> = ({ cx, cy }) => (
   <circle cx={cx} cy={cy} r="10" fill="currentColor" />
 );
 
@@ -39,7 +39,7 @@ const Die: React.FC<DieProps> = ({ value, isLocked, onClick, rolling }) => {
     <div
       onClick={onClick}
       className={`
-        w-16 h-16 sm:w-20 sm:h-20 bg-white rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200
+        w-14 h-14 sm:w-20 sm:h-20 bg-white rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200
         border-2
         ${isLocked 
             ? 'border-green-500 ring-2 ring-green-200 -translate-y-2 shadow-lg shadow-green-200' 

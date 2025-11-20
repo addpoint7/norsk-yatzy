@@ -1,7 +1,7 @@
 import React from 'react';
 import { Category, Player, ScoreSheet } from '../types';
 import { calculateScore, calculateUpperSum, calculateTotal } from '../services/gameLogic';
-import { Crown } from 'lucide-react';
+import { Check } from 'lucide-react';
 
 interface ScoreTableProps {
   players: Player[];
@@ -12,8 +12,6 @@ interface ScoreTableProps {
   rollsLeft: number;
   turnCount: number;
 }
-
-const categories = Object.values(Category);
 
 const ScoreTable: React.FC<ScoreTableProps> = ({ 
   players, 
@@ -27,9 +25,16 @@ const ScoreTable: React.FC<ScoreTableProps> = ({
   const renderRow = (category: Category, isHeader = false, isSum = false) => {
     return (
       <tr key={category} className={`${isSum ? 'bg-slate-100 font-bold text-slate-900' : 'border-b border-slate-100 hover:bg-slate-50'}`}>
-        <td className="p-2 sm:p-3 text-sm sm:text-base text-slate-600 font-medium whitespace-nowrap">
+        {/* Sticky Left Column (Categories) */}
+        <td className={`
+            p-2 sm:p-3 text-sm sm:text-base font-medium whitespace-nowrap 
+            sticky left-0 z-30 
+            border-r border-slate-100 drop-shadow-[2px_0_0_rgba(0,0,0,0.02)]
+            ${isSum ? 'bg-slate-100 text-slate-900' : 'bg-white text-slate-600'}
+        `}>
             {category}
         </td>
+        
         {players.map((player) => {
           const isCurrentPlayer = player.id === currentPlayerId;
           const hasScore = player.scores[category] !== undefined && player.scores[category] !== null;
@@ -57,9 +62,11 @@ const ScoreTable: React.FC<ScoreTableProps> = ({
             <td 
               key={`${player.id}-${category}`} 
               className={`
-                p-2 sm:p-3 text-center border-l border-slate-100 transition-colors
-                ${isCurrentPlayer && !isSum ? 'bg-indigo-50' : ''}
+                p-2 sm:p-3 text-center border-l border-r border-slate-100 transition-all relative
+                ${isCurrentPlayer ? 'border-indigo-100 border-x-2' : ''}
+                ${hasScore && !isSum ? 'bg-slate-50 inner-shadow' : ''} 
                 ${potentialScore !== null ? 'cursor-pointer bg-indigo-100 hover:bg-indigo-200 text-indigo-700 font-semibold' : 'text-slate-800'}
+                ${isCurrentPlayer && !hasScore && !isSum && potentialScore === null ? 'bg-indigo-50/30' : ''}
               `}
               onClick={() => {
                 if (potentialScore !== null) {
@@ -67,7 +74,21 @@ const ScoreTable: React.FC<ScoreTableProps> = ({
                 }
               }}
             >
-               {hasScore || isSum ? displayValue : (potentialScore !== null ? potentialScore : '')}
+               <div className="flex items-center justify-center gap-1 min-h-[1.5rem]">
+                 {hasScore && !isSum && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <Check className="w-8 h-8 text-green-500/10" />
+                    </div>
+                 )}
+                 
+                 <span className="relative z-10">
+                    {hasScore || isSum ? displayValue : (potentialScore !== null ? potentialScore : '')}
+                 </span>
+
+                 {hasScore && !isSum && (
+                     <Check className="w-3 h-3 text-green-600 absolute top-1 right-1 opacity-70" />
+                 )}
+               </div>
             </td>
           );
         })}
@@ -85,20 +106,34 @@ const ScoreTable: React.FC<ScoreTableProps> = ({
     Category.SMALL_STRAIGHT, Category.LARGE_STRAIGHT, Category.FULL_HOUSE, Category.CHANCE, Category.YATZY
   ];
 
-  // Sort players by score if game is over, otherwise by ID
-  const sortedPlayers = [...players]; 
-
   return (
-    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-xl">
+    // Wrapper needs height and overflow for sticky to work correctly
+    <div className="h-full w-full overflow-auto bg-white shadow-inner">
       <table className="w-full border-collapse">
-        <thead>
-          <tr className="bg-slate-50 border-b border-slate-200">
-            <th className="p-3 text-left text-slate-500 font-semibold text-sm uppercase tracking-wider">Kategori</th>
-            {sortedPlayers.map(p => (
-              <th key={p.id} className={`p-3 border-l border-slate-200 min-w-[100px] ${p.id === currentPlayerId ? 'text-indigo-600 bg-indigo-50/50' : 'text-slate-700'}`}>
-                <div className="flex flex-col items-center">
-                   <span className="text-lg font-bold">{p.name}</span>
-                   {p.id === currentPlayerId && gameStarted && <span className="text-xs text-indigo-500 font-medium animate-pulse">Kaster nå</span>}
+        <thead className="sticky top-0 z-40 bg-slate-50 shadow-sm">
+          <tr className="border-b border-slate-200 bg-slate-50">
+            {/* Sticky Top-Left Corner */}
+            <th className="p-3 text-left text-slate-500 font-semibold text-sm uppercase tracking-wider bg-slate-50 sticky left-0 top-0 z-50 border-r border-slate-200 min-w-[100px]">
+                Kategori
+            </th>
+            {players.map(p => (
+              <th key={p.id} className={`
+                p-2 sm:p-3 border-l border-r border-slate-200 relative transition-colors 
+                min-w-[65px] sm:min-w-[100px] max-w-[80px] sm:max-w-[120px]
+                ${p.id === currentPlayerId ? 'bg-indigo-50 border-indigo-200 border-x-2' : 'bg-slate-50'}
+              `}>
+                {p.id === currentPlayerId && (
+                    <div className="absolute -top-0 inset-x-0 h-1 bg-indigo-500"></div>
+                )}
+                <div className="flex flex-col items-center w-full overflow-hidden">
+                   <span className="text-sm sm:text-lg font-bold truncate w-full text-center text-slate-800 block" title={p.name}>
+                       {p.name}
+                   </span>
+                   {p.id === currentPlayerId && gameStarted && (
+                       <span className="text-[10px] uppercase tracking-wider text-indigo-600 font-bold animate-pulse bg-indigo-100 px-2 py-0.5 rounded-full mt-1 whitespace-nowrap">
+                           Din tur
+                       </span>
+                   )}
                 </div>
               </th>
             ))}
@@ -109,11 +144,11 @@ const ScoreTable: React.FC<ScoreTableProps> = ({
           {renderRow(Category.SUM, false, true)}
           {renderRow(Category.BONUS, false, true)}
           
-          <tr><td colSpan={players.length + 1} className="h-4 bg-slate-50 border-y border-slate-200"></td></tr>
+          <tr><td colSpan={players.length + 1} className="h-4 bg-slate-50/50 border-y border-slate-200 sticky left-0 z-0"></td></tr>
           
           {lowerSection.map(c => renderRow(c))}
           
-          <tr><td colSpan={players.length + 1} className="h-1 bg-indigo-500"></td></tr>
+          <tr><td colSpan={players.length + 1} className="h-1 bg-indigo-500 sticky left-0"></td></tr>
           {renderRow(Category.TOTAL, false, true)}
         </tbody>
       </table>
