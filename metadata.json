@@ -1,5 +1,5 @@
 {
   "name": "Yatzy (norwegian)",
-  "description": "En fullverdig implementasjon av Norsk Yatzy med AI-drevet spillrådgiver drevet av Gemini.",
+  "description": "En fullverdig implementasjon av Norsk Yatzy.",
   "requestFramePermissions": []
 }

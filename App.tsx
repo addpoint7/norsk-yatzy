@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Dices, RotateCcw, Trophy, Users, Sparkles, Lock, Unlock, Crown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Dices, RotateCcw, Crown } from 'lucide-react';
 import Die from './components/Die';
 import ScoreTable from './components/ScoreTable';
 import { Player, DieState, Category, GameState } from './types';
 import { calculateTotal } from './services/gameLogic';
-import { getGeminiAdvice } from './services/geminiService';
 
 // Initial configuration
 const INITIAL_DICE: DieState[] = Array.from({ length: 5 }, (_, i) => ({
@@ -29,9 +28,6 @@ const App: React.FC = () => {
     winnerId: null,
   });
 
-  // AI Advice State
-  const [aiAdvice, setAiAdvice] = useState<string | null>(null);
-  const [loadingAdvice, setLoadingAdvice] = useState(false);
   const [isRolling, setIsRolling] = useState(false);
 
   // Update player names array when number of players changes
@@ -72,7 +68,6 @@ const App: React.FC = () => {
       gameOver: false,
       winnerId: null,
     });
-    setAiAdvice(null);
     setGameStarted(true);
   };
 
@@ -89,7 +84,6 @@ const App: React.FC = () => {
     if (gameState.rollsLeft <= 0 || gameState.gameOver) return;
 
     setIsRolling(true);
-    setAiAdvice(null); // Clear old advice
 
     // Animation delay
     setTimeout(() => {
@@ -143,16 +137,6 @@ const App: React.FC = () => {
         winnerId
       };
     });
-    setAiAdvice(null);
-  };
-
-  const fetchAiAdvice = async () => {
-    if (gameState.rollsLeft === 3) return; // Haven't rolled yet
-    setLoadingAdvice(true);
-    const currentPlayer = gameState.players[gameState.currentPlayerIndex];
-    const advice = await getGeminiAdvice(gameState.dice, currentPlayer.scores, gameState.rollsLeft);
-    setAiAdvice(advice);
-    setLoadingAdvice(false);
   };
 
   // Component for Controls
@@ -185,12 +169,12 @@ const App: React.FC = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="w-full">
         <button
           onClick={rollDice}
           disabled={gameState.rollsLeft === 0 || isRolling}
           className={`
-            py-4 px-6 rounded-lg font-bold text-lg shadow-md flex items-center justify-center gap-3 transition-all
+            w-full py-4 px-6 rounded-lg font-bold text-lg shadow-md flex items-center justify-center gap-3 transition-all
             ${gameState.rollsLeft > 0 
               ? 'bg-indigo-600 hover:bg-indigo-500 text-white hover:-translate-y-1' 
               : 'bg-slate-100 text-slate-400 cursor-not-allowed'}
@@ -199,46 +183,11 @@ const App: React.FC = () => {
           <RotateCcw className={`w-6 h-6 ${isRolling ? 'animate-spin' : ''}`} />
           {gameState.rollsLeft === 3 ? 'Kast terninger' : gameState.rollsLeft > 0 ? 'Kast igjen' : 'Velg poengsum'}
         </button>
-
-        <button
-            onClick={fetchAiAdvice}
-            disabled={gameState.rollsLeft === 3 || gameState.rollsLeft === 0 || loadingAdvice}
-            className={`
-                py-4 px-6 rounded-lg font-semibold shadow-sm flex items-center justify-center gap-2 transition-all border
-                ${gameState.rollsLeft < 3 && gameState.rollsLeft > 0
-                    ? 'bg-white border-indigo-200 text-indigo-600 hover:bg-indigo-50'
-                    : 'bg-slate-50 border-slate-200 text-slate-400 cursor-not-allowed'}
-            `}
-        >
-            {loadingAdvice ? (
-                <span className="animate-pulse">Tenker...</span>
-            ) : (
-                <>
-                    <Sparkles className="w-5 h-5" />
-                    Spør AI om tips
-                </>
-            )}
-        </button>
       </div>
       
       <div className="text-center text-slate-400 text-sm mt-2">
          {gameState.rollsLeft < 3 ? 'Klikk på terninger for å låse/låse opp' : 'Kast for å starte runden'}
       </div>
-
-      {/* AI Advice Box */}
-      {aiAdvice && (
-          <div className="mt-2 p-4 bg-indigo-50 border border-indigo-200 rounded-lg animate-fadeIn shadow-sm">
-              <div className="flex items-start gap-3">
-                  <div className="p-2 bg-white rounded-full shadow-sm mt-1 text-indigo-600">
-                      <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                      <h4 className="text-xs font-bold text-indigo-500 uppercase tracking-wider mb-1">AI Rådgiver</h4>
-                      <p className="text-slate-700 text-sm leading-relaxed">{aiAdvice}</p>
-                  </div>
-              </div>
-          </div>
-      )}
     </div>
   );
 
